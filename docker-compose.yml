@@ -1,0 +1,55 @@
+networks:
+  dev:
+
+services:
+  apache:
+    image: custom-php:latest  # Custom image with PHP and Apache installed
+    container_name: php-apache
+    volumes:
+      - ./src:/var/www/html  # Mount your website files
+    ports:
+      - "80:80"            # Map port 80 inside the container to 80 on your host
+    depends_on:
+      - mysql
+    networks:
+      - dev
+
+  mysql:
+    image: mysql:5.5
+    container_name: mysql
+    environment:
+      MYSQL_VERSION: 5.5.32
+      MYSQL_ROOT_PASSWORD: mysql-password
+      MYSQL_DATABASE: my_website_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - ./database:/usr/local/mysql/data
+      - ./database:/docker-entrypoint-initdb.d
+      # - ./database/data.sql:/docker-entrypoint-initdb.d/dump.sql
+    ports:
+      - "3306:3306"
+    stdin_open: true
+    tty: true
+    restart: on-failure
+    networks:
+      - dev
+
+  phpmyadmin:
+    image: custom-phpmyadmin:latest    # Custom image with phpMyAdmin installed
+    container_name: phpmyadmin
+    ports:
+      - "8080:80"          # Map port 80 inside the container to 8080 on the host
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: mysql-password
+    depends_on:
+      - mysql
+    stdin_open: true
+    tty: true
+    networks:
+      - dev
+
+volumes:
+  mysql_data:
+    driver: local
